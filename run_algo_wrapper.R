@@ -99,10 +99,14 @@ F_mean <- apply(FiducialMidLine1, 1, mean)
 F_low <- apply(FiducialMidLine1, 1, quantile, probs = alpha/2)
 F_high <- apply(FiducialMidLine1, 1, quantile, probs = 1 - alpha/2)
 
+F_median <- point_li
+
 # Convert to survival function S(t) = 1 - F(t)
-S_hat <- 1 - F_mean
+# S_hat <- 1 - F_mean
+S_hat   <- 1 - F_median      # <-- change: S_hat is median-based
 S_low <- 1 - F_high  # Note the flip: lower CI of S = 1 - upper CI of F
 S_high <- 1 - F_low
+S_mean  <- 1 - F_mean        # optional: keep mean-based survival for reference
 
 # Also calculate point estimate from point_li
 S_point_li <- 1 - point_li
@@ -113,8 +117,10 @@ output_df <- data.frame(
   S_hat = S_hat,
   S_low = S_low,
   S_high = S_high,
+  S_mean = S_mean,      # optional
   S_point_li = S_point_li,
   F_mean = F_mean,
+  F_median = F_median,  # optional
   F_low = F_low,
   F_high = F_high
 )
@@ -138,5 +144,6 @@ cat("  S_low range: [", min(S_low), ",", max(S_low), "]\n")
 cat("  S_high range: [", min(S_high), ",", max(S_high), "]\n")
 cat("\nFirst 10 point_li values:", head(point_li, 10), "\n")
 cat("First 10 F_mean values:", head(F_mean, 10), "\n")
+cat("First 10 F_median values:", head(F_median, 10), "\n")
 
 cat("\n=== Wrapper completed successfully ===\n")

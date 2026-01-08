@@ -5,9 +5,21 @@ library(interval)
 # input n (# of samples) l (a vector representing the left end) r (a vector representing the right end)
 # input ngrid & grid.low & grid.high to generate a fiducial grid
 # input testgrid (use to test MSE or coverage etc.)
-mfid = 1000 # number of fiducial samples
-mburn = 100 # number of burn-in samples
-alpha = 0.05 # confidence level
+######################################################################## Start Weijie Update ########################################################################
+# mfid = 1000 # number of fiducial samples
+# mburn = 100 # number of burn-in samples
+# alpha = 0.05 # confidence level
+
+# Allow wrapper to pass in mfid/mburn/alpha; only set defaults if missing
+if (!exists("mfid"))  mfid  <- 1000L
+if (!exists("mburn")) mburn <- 100L
+if (!exists("alpha")) alpha <- 0.05
+
+mfid  <- as.integer(mfid)
+mburn <- as.integer(mburn)
+alpha <- as.numeric(alpha)
+######################################################################## End Weijie Update ########################################################################
+
 
 grid = seq(grid.low,grid.high,length.out=ngrid)
 ntestgrid = length(testgrid)
@@ -89,8 +101,12 @@ point_mix=linefidm[2*mfid*0.5,] # alternative: can use median as a point estimat
 fid.grid=cbind(fid.lower,fid.upper)[(mburn+1):(mburn+mfid),]
 linefid1=t(apply(fid.grid,1,linear_interpolation,grid=grid))
 FiducialMidLine1= apply(linefid1,1,function(x){approx(grid,x,testgrid, method = 'linear')$y})
-linefidi=apply(FiducialMidLine1,1,sort)
-point_li=linefidi[mfid*0.5,] # point estimator based on linear interpolation
 
+######################################################################## Start Weijie Update ########################################################################
 
+# linefidi=apply(FiducialMidLine1,1,sort)
+# point_li=linefidi[mfid*0.5,] # point estimator based on linear interpolation
+
+point_li <- apply(FiducialMidLine1, 1, median, na.rm = TRUE) # use median as point estimator
+######################################################################## End Weijie Update ########################################################################
 
