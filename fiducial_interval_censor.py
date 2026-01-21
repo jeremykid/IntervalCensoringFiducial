@@ -619,6 +619,7 @@ def fit_fiducial_interval_censor(
     inf_mask = ~np.isfinite(r)
     
     # For setting grid_high, only use finite r values
+    '''
     r_for_grid = r.copy()
     if np.any(inf_mask):
         if np.any(~inf_mask):
@@ -626,12 +627,26 @@ def fit_fiducial_interval_censor(
         else:
             finite_r_max = np.max(l) * 2
         r_for_grid[inf_mask] = finite_r_max  # Only used for grid_high calculation in the initial round.
-    
+    '''
+    finite_r = r[np.isfinite(r)]
+
+
     # Set grid bounds
     if grid_low is None:
         grid_low = float(np.min(l))
+
+    '''
     if grid_high is None:
         grid_high = float(np.max(r_for_grid))
+    '''
+    if grid_high is None:
+        if finite_r.size > 0:
+            grid_high = float(np.max(finite_r))   # default matches R wrapper idea
+        else:
+            # No finite right endpoints (e.g., no observed events).
+            # Use a conservative finite window; better: require user to pass grid_high_override.
+            grid_high = float(np.max(l))          # NOT 2*max(l)
+
     if grid_high_override is not None:
         grid_high = float(grid_high_override)
     
@@ -652,10 +667,14 @@ def fit_fiducial_interval_censor(
     # Initialize u (Lines 1-3 in Algorithm 1)
     # For midpoint calculation, use finite substitute for Inf values
     r_for_mid = r.copy()
+    '''
     if np.any(inf_mask):
         # Use a finite value for midpoint ordering only
         # This matches R behavior where (l + Inf) / 2 = Inf, but we need finite for sorting
         r_for_mid[inf_mask] = r_for_grid[inf_mask]  # Use the grid_high based value
+    '''        
+    r_for_mid[~np.isfinite(r_for_mid)] = grid_high
+
     mid = (l + r_for_mid) / 2
     u = np.sort(rng.uniform(0, 1, n))
     u = u[np.argsort(np.argsort(mid))]  # Reorder by midpoint order
@@ -795,7 +814,7 @@ def _demo():
     
     # Some right-censored (r = inf -> use large value)
     right_censored = np.random.random(n) < 0.1
-    r[right_censored] = np.max(r) * 1.5
+    r[right_censored] = np.inf # np.max(r) * 1.5
     
     print(f"\nSample size: {n}")
     print(f"Number right-censored: {np.sum(right_censored)}")
